@@ -1,0 +1,177 @@
+name: CMake
+
+on:
+  push:
+    tags:
+    - 'v*'
+
+jobs:
+  build:
+    permissions:
+      contents: write
+      packages: read
+
+    strategy:
+      matrix:
+        include:
+          - target: win_x64
+            vs_arch: x64
+            runner: windows-latest
+            cmake_args: ''
+            cmake_lib_args: '"-DCMAKE_CONFIGURATION_TYPES=Release;Debug"'
+            workdir: C:/Workspace
+            qtbase_config: '
+                -DFEATURE_optimize_size=on 
+                -DFEATURE_dbus=off 
+                -DFEATURE_printsupport=off 
+                -DFEATURE_widgets=off 
+                -DFEATURE_xml=off 
+                -DFEATURE_topleveldomain=off 
+                -DFEATURE_androiddeployqt=off 
+                -DFEATURE_gif=off 
+                -DFEATURE_ico=off 
+                -DFEATURE_texthtmlparser=off 
+                -DFEATURE_textmarkdownreader=on 
+                -DFEATURE_textmarkdownwriter=off 
+                -DFEATURE_textodfwriter=off 
+                -DFEATURE_cssparser=off 
+                -DFEATURE_opengl=off 
+                -DFEATURE_dynamicgl=off 
+                -DFEATURE_sql_odbc=off 
+                -DFEATURE_direct2d=off 
+                -DFEATURE_directwrite=off'
+
+            qtdeclarative_config: '
+                -DFEATURE_quickcontrols2_fusion=OFF 
+                -DFEATURE_quickcontrols2_imagine=OFF 
+                -DFEATURE_quickcontrols2_ios=OFF 
+                -DFEATURE_quickcontrols2_macos=OFF 
+                -DFEATURE_quickcontrols2_material=OFF 
+                -DFEATURE_quickcontrols2_universal=OFF 
+                -DFEATURE_quickcontrols2_windows=OFF'
+
+          - target: linux_x64
+            runner: ubuntu-latest
+            container: ghcr.io/desk5/ubuntu18-buildenv:latest
+
+            cmake_args: "-DCMAKE_TOOLCHAIN_FILE=/tmp/gcc8.cmake"
+            cmake_lib_args: '"-DCMAKE_CONFIGURATION_TYPES=Release"'
+            workdir: /workspace
+            qtbase_config: '
+                -DFEATURE_cxx17_filesystem=off
+                -DFEATURE_optimize_size=on 
+                -DFEATURE_printsupport=off 
+                -DFEATURE_widgets=off 
+                -DFEATURE_xml=off 
+                -DFEATURE_topleveldomain=off 
+                -DFEATURE_androiddeployqt=off 
+                -DFEATURE_gif=off 
+                -DFEATURE_ico=off 
+                -DFEATURE_texthtmlparser=off 
+                -DFEATURE_textmarkdownreader=on 
+                -DFEATURE_textmarkdownwriter=off 
+                -DFEATURE_textodfwriter=off 
+                -DFEATURE_cssparser=off 
+                -DFEATURE_sql_odbc=off
+                -DFEATURE_sql_mysql=off
+                -DFEATURE_sql_psql=off
+                -DFEATURE_vnc=off
+                -DFEATURE_linuxfb=off
+                -DFEATURE_eglfs=off'
+            qtdeclarative_config: '
+                -DFEATURE_quickcontrols2_fusion=OFF 
+                -DFEATURE_quickcontrols2_imagine=OFF 
+                -DFEATURE_quickcontrols2_ios=OFF 
+                -DFEATURE_quickcontrols2_macos=OFF 
+                -DFEATURE_quickcontrols2_material=OFF 
+                -DFEATURE_quickcontrols2_universal=OFF 
+                -DFEATURE_quickcontrols2_windows=OFF'
+
+      fail-fast: false
+
+    runs-on: ${{ matrix.runner }}
+    container: ${{ matrix.container }}
+    env:
+      Qt6_DIR: ${{matrix.workdir}}/Qt6-desk5/${{matrix.target}}
+      BUILD_DIR_BASE: ${{matrix.workdir}}/build
+
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        submodules: recursive
+        fetch-depth: 1
+
+    - name: Setup VS Dev Environment
+      if: runner.os == 'Windows'
+      uses: egor-tensin/vs-shell@v2
+      with:
+        arch: ${{ matrix.vs_arch }}
+
+    - name: Setup GCC8 toolchain
+      if: runner.os == 'Linux'
+      shell: bash
+      run: |
+        echo 'set(CMAKE_C_COMPILER gcc-8)
+              set(CMAKE_CXX_COMPILER g++-8)
+              set(CMAKE_CXX_STANDARD_LIBRARIES -lstdc++fs)' > /tmp/gcc8.cmake
+
+    - name: Set PATH
+      shell: bash
+      run: |
+        echo "${BUILD_DIR_BASE}-qtbase/bin" >> "$GITHUB_PATH"
+        echo "${BUILD_DIR_BASE}-qtdeclarative/bin" >> "$GITHUB_PATH"
+
+    - name: Configure QtBase
+      shell: bash
+      run: cmake -S qtbase -B "${BUILD_DIR_BASE}-qtbase" "-DCMAKE_INSTALL_PREFIX=${{env.Qt6_DIR}}" -G "Ninja Multi-Config" ${{matrix.cmake_args}} ${{matrix.cmake_lib_args}} ${{matrix.qtbase_config}}
+
+    - name: Build QtBase
+      shell: bash
+      run: cd "${BUILD_DIR_BASE}-qtbase"; for ninjafile in build-*.ninja; do ninja -f "$ninjafile" || exit 1; done
+
+    - name: Install QtBase
+      shell: bash
+      run: cd "${BUILD_DIR_BASE}-qtbase"; for f in build-*.ninja; do f=${f%.ninja}; f=${f#build-}; cmake --install . --config $f || exit 1; done
+
+    - name: Configure QtShaderTools
+      shell: bash
+      run: cmake -S qtshadertools -B "${BUILD_DIR_BASE}-qtshadertools" "-DCMAKE_INSTALL_PREFIX=${{env.Qt6_DIR}}" -G Ninja ${{matrix.cmake_args}} -DCMAKE_BUILD_TYPE=Release -DQt6CoreTools_DIR=${{env.Qt6_DIR}}/lib/cmake/Qt6CoreTools
+      # We specify Qt6CoreTools_DIR because the global PATH somehow confuses cmake
+    
+    - name: Build QtShaderTools
+      shell: bash
+      run: cmake --build "${BUILD_DIR_BASE}-qtshadertools" --parallel
+    
+    - name: Install QtShaderTools
+      shell: bash
+      run: cmake --install "${BUILD_DIR_BASE}-qtshadertools"
+
+    - name: Configure QtDeclarative
+      shell: bash
+      run: cmake -S qtdeclarative -B "${BUILD_DIR_BASE}-qtdeclarative" "-DCMAKE_INSTALL_PREFIX=${{env.Qt6_DIR}}" -G "Ninja Multi-Config" ${{matrix.cmake_args}} ${{matrix.cmake_lib_args}} ${{matrix.qtdeclarative_config}} -DQt6CoreTools_DIR=${{env.Qt6_DIR}}/lib/cmake/Qt6CoreTools
+
+    - name: Build QtDeclarative
+      shell: bash
+      run: cd "${BUILD_DIR_BASE}-qtdeclarative"; for ninjafile in build-*.ninja; do ninja -f "$ninjafile" || exit 1; done
+
+    - name: Install QtDeclarative
+      shell: bash
+      run: cd "${BUILD_DIR_BASE}-qtdeclarative"; for f in build-*.ninja; do f=${f%.ninja}; f=${f#build-}; cmake --install . --config $f || exit 1; done
+
+    - name: Archive Release
+      if: startsWith(github.ref, 'refs/tags/')
+      uses: thedoctor0/zip-release@0.7.1
+      with:
+        type: 'zip'
+        filename: '${{github.workspace}}/qt6-${{github.ref_name}}-${{matrix.target}}.zip'
+        directory: ${{matrix.workdir}}
+        path: Qt6-desk5
+        exclusions: '*.pdb'
+        recursive_exclusions: '*.pdb'
+
+    - name: Upload Release
+      if: startsWith(github.ref, 'refs/tags/')
+      uses: softprops/action-gh-release@v1
+      with:
+        fail_on_unmatched_files: true
+        files: qt6-${{github.ref_name}}-${{matrix.target}}.zip
