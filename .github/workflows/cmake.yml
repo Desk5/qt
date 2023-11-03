@@ -4,6 +4,7 @@ on:
   push:
     tags:
     - 'v*'
+  workflow_dispatch:
 
 jobs:
   build:
@@ -87,6 +88,81 @@ jobs:
                 -DFEATURE_quickcontrols2_universal=OFF 
                 -DFEATURE_quickcontrols2_windows=OFF'
 
+          - target: mac_x64
+            runner: macos-latest
+            cmake_args: '"-DCMAKE_OSX_ARCHITECTURES=x86_64"'
+            cmake_lib_args: '"-DCMAKE_CONFIGURATION_TYPES=Release"'
+            workdir: /Users/runner/workspace
+            qtbase_config: '
+                -DFEATURE_optimize_size=on 
+                -DFEATURE_dbus=off 
+                -DFEATURE_printsupport=off 
+                -DFEATURE_widgets=off 
+                -DFEATURE_xml=off 
+                -DFEATURE_topleveldomain=off 
+                -DFEATURE_androiddeployqt=off 
+                -DFEATURE_gif=off 
+                -DFEATURE_ico=off 
+                -DFEATURE_texthtmlparser=off 
+                -DFEATURE_textmarkdownreader=on 
+                -DFEATURE_textmarkdownwriter=off 
+                -DFEATURE_textodfwriter=off 
+                -DFEATURE_cssparser=off 
+                -DINPUT_opengl=no
+                -DFEATURE_sql_odbc=off
+                -DFEATURE_sql_mysql=off
+                -DFEATURE_sql_psql=off
+                -DFEATURE_vnc=off'
+            qtdeclarative_config: '
+                -DFEATURE_quickcontrols2_fusion=OFF 
+                -DFEATURE_quickcontrols2_imagine=OFF 
+                -DFEATURE_quickcontrols2_ios=OFF 
+                -DFEATURE_quickcontrols2_macos=OFF 
+                -DFEATURE_quickcontrols2_material=OFF 
+                -DFEATURE_quickcontrols2_universal=OFF 
+                -DFEATURE_quickcontrols2_windows=OFF'
+
+          - target: mac_arm64
+            # The runner is x64 and we are building for ARM
+            # We need to "cross-compile" Qt. This requires a set of "host tools" from a
+            # native Intel build. We install stock Qt for this. Setting CMAKE_SYSTEM_NAME
+            # triggers cross-compilation mode.
+            cross_qt_host: 'mac'
+            cross_qt_version: '6.5.2'
+            cross_qt_arch: 'clang_64'
+            runner: macos-latest
+            cmake_args: '"-DCMAKE_OSX_ARCHITECTURES=arm64" -DCMAKE_SYSTEM_NAME=Darwin -DQT_FORCE_BUILD_TOOLS=on -DQT_HOST_PATH=/Users/runner/work/qt/Qt/6.5.2/macos'
+            cmake_lib_args: '"-DCMAKE_CONFIGURATION_TYPES=Release"'
+            workdir: /Users/runner/workspace
+            qtbase_config: '
+                -DFEATURE_optimize_size=on 
+                -DFEATURE_dbus=off 
+                -DFEATURE_printsupport=off 
+                -DFEATURE_widgets=off 
+                -DFEATURE_xml=off 
+                -DFEATURE_topleveldomain=off 
+                -DFEATURE_androiddeployqt=off 
+                -DFEATURE_gif=off 
+                -DFEATURE_ico=off 
+                -DFEATURE_texthtmlparser=off 
+                -DFEATURE_textmarkdownreader=on 
+                -DFEATURE_textmarkdownwriter=off 
+                -DFEATURE_textodfwriter=off 
+                -DFEATURE_cssparser=off 
+                -DINPUT_opengl=no
+                -DFEATURE_sql_odbc=off
+                -DFEATURE_sql_mysql=off
+                -DFEATURE_sql_psql=off
+                -DFEATURE_vnc=off'
+            qtdeclarative_config: '
+                -DFEATURE_quickcontrols2_fusion=OFF 
+                -DFEATURE_quickcontrols2_imagine=OFF 
+                -DFEATURE_quickcontrols2_ios=OFF 
+                -DFEATURE_quickcontrols2_macos=OFF 
+                -DFEATURE_quickcontrols2_material=OFF 
+                -DFEATURE_quickcontrols2_universal=OFF 
+                -DFEATURE_quickcontrols2_windows=OFF'
+
       fail-fast: false
 
     runs-on: ${{ matrix.runner }}
@@ -114,6 +190,25 @@ jobs:
         echo 'set(CMAKE_C_COMPILER gcc-8)
               set(CMAKE_CXX_COMPILER g++-8)
               set(CMAKE_CXX_STANDARD_LIBRARIES -lstdc++fs)' > /tmp/gcc8.cmake
+
+    - name: Install Homebrew dependencies
+      if: runner.os == 'macOS'
+      shell: bash
+      run: brew install ninja
+
+    - name: Install Host Qt for cross-compilation
+      uses: jurplel/install-qt-action@v3
+      if: matrix.cross_qt_host
+      with:
+        version: ${{matrix.cross_qt_version}}
+        host: ${{matrix.cross_qt_host}}
+        target: 'desktop'
+        arch: ${{matrix.cross_qt_arch}}
+        archives: 'qtbase qtdeclarative'
+        modules: 'qtshadertools'
+        add-tools-to-path: false
+        set-env: false
+        cache: true
 
     - name: Set PATH
       shell: bash
