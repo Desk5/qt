@@ -19,7 +19,7 @@ jobs:
             vs_arch: x64
             runner: windows-latest
             cmake_args: ''
-            cmake_lib_args: '"-DCMAKE_CONFIGURATION_TYPES=Release;Debug"'
+            cmake_configs: 'Release;Debug'
             workdir: C:/Workspace
             qtbase_config: '
                 -DFEATURE_optimize_size=on 
@@ -56,7 +56,7 @@ jobs:
             container: ghcr.io/desk5/ubuntu18-buildenv:latest
 
             cmake_args: "-DCMAKE_TOOLCHAIN_FILE=/tmp/gcc8.cmake"
-            cmake_lib_args: '"-DCMAKE_CONFIGURATION_TYPES=Release"'
+            cmake_configs: 'Release'
             workdir: /workspace
             qtbase_config: '
                 -DFEATURE_cxx17_filesystem=off
@@ -91,7 +91,7 @@ jobs:
           - target: mac_x64
             runner: macos-latest
             cmake_args: '"-DCMAKE_OSX_ARCHITECTURES=x86_64"'
-            cmake_lib_args: '"-DCMAKE_CONFIGURATION_TYPES=Release"'
+            cmake_configs: 'Release'
             workdir: /Users/runner/workspace
             qtbase_config: '
                 -DFEATURE_optimize_size=on 
@@ -132,7 +132,7 @@ jobs:
             cross_qt_arch: 'clang_64'
             runner: macos-latest
             cmake_args: '"-DCMAKE_OSX_ARCHITECTURES=arm64" -DCMAKE_SYSTEM_NAME=Darwin -DQT_FORCE_BUILD_TOOLS=on -DQT_HOST_PATH=/Users/runner/work/qt/Qt/6.5.2/macos'
-            cmake_lib_args: '"-DCMAKE_CONFIGURATION_TYPES=Release"'
+            cmake_configs: 'Release'
             workdir: /Users/runner/workspace
             qtbase_config: '
                 -DFEATURE_optimize_size=on 
@@ -210,28 +210,27 @@ jobs:
         set-env: false
         cache: true
 
-    - name: Set PATH
-      shell: bash
-      run: |
-        echo "${BUILD_DIR_BASE}-qtbase/bin" >> "$GITHUB_PATH"
-        echo "${BUILD_DIR_BASE}-qtdeclarative/bin" >> "$GITHUB_PATH"
-
     - name: Configure QtBase
       shell: bash
-      run: cmake -S qtbase -B "${BUILD_DIR_BASE}-qtbase" "-DCMAKE_INSTALL_PREFIX=${{env.Qt6_DIR}}" -G "Ninja Multi-Config" ${{matrix.cmake_args}} ${{matrix.cmake_lib_args}} ${{matrix.qtbase_config}}
+      run: >
+          cmake -S qtbase -B "${BUILD_DIR_BASE}-qtbase"
+          "-DCMAKE_INSTALL_PREFIX=${{env.Qt6_DIR}}"
+          -G "Ninja Multi-Config"
+          "-DCMAKE_CONFIGURATION_TYPES=${{matrix.cmake_configs}}"
+          ${{matrix.cmake_args}}
+          ${{matrix.qtbase_config}}
 
     - name: Build QtBase
       shell: bash
-      run: cd "${BUILD_DIR_BASE}-qtbase"; for ninjafile in build-*.ninja; do ninja -f "$ninjafile" || exit 1; done
+      run: cmake --build "${BUILD_DIR_BASE}-qtbase" --parallel
 
     - name: Install QtBase
       shell: bash
-      run: cd "${BUILD_DIR_BASE}-qtbase"; for f in build-*.ninja; do f=${f%.ninja}; f=${f#build-}; cmake --install . --config $f || exit 1; done
+      run: ninja -C "${BUILD_DIR_BASE}-qtbase" install
 
     - name: Configure QtShaderTools
       shell: bash
-      run: cmake -S qtshadertools -B "${BUILD_DIR_BASE}-qtshadertools" "-DCMAKE_INSTALL_PREFIX=${{env.Qt6_DIR}}" -G Ninja ${{matrix.cmake_args}} -DCMAKE_BUILD_TYPE=Release -DQt6CoreTools_DIR=${{env.Qt6_DIR}}/lib/cmake/Qt6CoreTools
-      # We specify Qt6CoreTools_DIR because the global PATH somehow confuses cmake
+      run: cmake -S qtshadertools -B "${BUILD_DIR_BASE}-qtshadertools" "-DCMAKE_INSTALL_PREFIX=${{env.Qt6_DIR}}" -G Ninja ${{matrix.cmake_args}} -DCMAKE_BUILD_TYPE=Release
     
     - name: Build QtShaderTools
       shell: bash
@@ -239,19 +238,25 @@ jobs:
     
     - name: Install QtShaderTools
       shell: bash
-      run: cmake --install "${BUILD_DIR_BASE}-qtshadertools"
+      run: ninja -C "${BUILD_DIR_BASE}-qtshadertools" install
 
     - name: Configure QtDeclarative
       shell: bash
-      run: cmake -S qtdeclarative -B "${BUILD_DIR_BASE}-qtdeclarative" "-DCMAKE_INSTALL_PREFIX=${{env.Qt6_DIR}}" -G "Ninja Multi-Config" ${{matrix.cmake_args}} ${{matrix.cmake_lib_args}} ${{matrix.qtdeclarative_config}} -DQt6CoreTools_DIR=${{env.Qt6_DIR}}/lib/cmake/Qt6CoreTools
+      run: >
+          cmake -S qtdeclarative -B "${BUILD_DIR_BASE}-qtdeclarative"
+          "-DCMAKE_INSTALL_PREFIX=${{env.Qt6_DIR}}"
+          -G "Ninja Multi-Config"
+          "-DCMAKE_CONFIGURATION_TYPES=${{matrix.cmake_configs}}"
+          ${{matrix.cmake_args}}
+          ${{matrix.qtdeclarative_config}}
 
     - name: Build QtDeclarative
       shell: bash
-      run: cd "${BUILD_DIR_BASE}-qtdeclarative"; for ninjafile in build-*.ninja; do ninja -f "$ninjafile" || exit 1; done
+      run: cmake --build "${BUILD_DIR_BASE}-qtdeclarative" --parallel
 
     - name: Install QtDeclarative
       shell: bash
-      run: cd "${BUILD_DIR_BASE}-qtdeclarative"; for f in build-*.ninja; do f=${f%.ninja}; f=${f#build-}; cmake --install . --config $f || exit 1; done
+      run: ninja -C "${BUILD_DIR_BASE}-qtdeclarative" install
 
     - name: Archive Release
       if: startsWith(github.ref, 'refs/tags/')
