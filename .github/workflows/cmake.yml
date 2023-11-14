@@ -258,6 +258,11 @@ jobs:
       shell: bash
       run: ninja -C "${BUILD_DIR_BASE}-qtdeclarative" install
 
+    - name: Remove __qt_platform_requires_host_info_package flag from build
+      if: matrix.cross_qt_host
+      shell: bash
+      run: perl -pi -e 's/(?<=__qt_platform_requires_host_info_package )"TRUE"/"FALSE"/' ${{env.Qt6_DIR}}/lib/cmake/Qt6/Qt6Dependencies.cmake
+
     - name: Archive Release
       if: startsWith(github.ref, 'refs/tags/')
       uses: thedoctor0/zip-release@0.7.1
