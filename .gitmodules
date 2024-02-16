@@ -6,4 +6,4 @@
 	url = https://github.com/Desk5/qtdeclarative
 [submodule "qtshadertools"]
 	path = qtshadertools
-	url = https://github.com/qt/qtshadertools
+	url = https://github.com/Desk5/qtshadertools
