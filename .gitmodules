@@ -7,3 +7,7 @@
 [submodule "qtshadertools"]
 	path = qtshadertools
 	url = https://github.com/Desk5/qtshadertools
+[submodule "qtimageformats"]
+	path = qtimageformats
+	url = https://github.com/qt/qtimageformats
+	branch = 6.5.2
