@@ -31,7 +31,7 @@ jobs:
                 -DFEATURE_androiddeployqt=off 
                 -DFEATURE_gif=off 
                 -DFEATURE_ico=off 
-                -DFEATURE_texthtmlparser=off 
+                -DFEATURE_texthtmlparser=on
                 -DFEATURE_textmarkdownreader=on 
                 -DFEATURE_textmarkdownwriter=off 
                 -DFEATURE_textodfwriter=off 
@@ -72,7 +72,7 @@ jobs:
                 -DFEATURE_androiddeployqt=off 
                 -DFEATURE_gif=off 
                 -DFEATURE_ico=off 
-                -DFEATURE_texthtmlparser=off 
+                -DFEATURE_texthtmlparser=on
                 -DFEATURE_textmarkdownreader=on 
                 -DFEATURE_textmarkdownwriter=off 
                 -DFEATURE_textodfwriter=off 
@@ -112,7 +112,7 @@ jobs:
                 -DFEATURE_androiddeployqt=off 
                 -DFEATURE_gif=off 
                 -DFEATURE_ico=off 
-                -DFEATURE_texthtmlparser=off 
+                -DFEATURE_texthtmlparser=on
                 -DFEATURE_textmarkdownreader=on 
                 -DFEATURE_textmarkdownwriter=off 
                 -DFEATURE_textodfwriter=off 
@@ -159,7 +159,7 @@ jobs:
                 -DFEATURE_androiddeployqt=off 
                 -DFEATURE_gif=off 
                 -DFEATURE_ico=off 
-                -DFEATURE_texthtmlparser=off 
+                -DFEATURE_texthtmlparser=on
                 -DFEATURE_textmarkdownreader=on 
                 -DFEATURE_textmarkdownwriter=off 
                 -DFEATURE_textodfwriter=off 
