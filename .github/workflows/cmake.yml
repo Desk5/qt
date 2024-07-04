@@ -99,7 +99,7 @@ jobs:
 
           - target: mac_x64
             runner: macos-latest
-            cmake_args: '"-DCMAKE_OSX_ARCHITECTURES=x86_64"'
+            cmake_args: '"-DCMAKE_OSX_ARCHITECTURES=x86_64" "-DCMAKE_OSX_DEPLOYMENT_TARGET=11.0"'
             cmake_configs: 'Release'
             workdir: /Users/runner/workspace
             qtbase_config: '
@@ -146,7 +146,7 @@ jobs:
             cross_qt_arch: 'clang_64'
             cross_qt_path: '/Users/runner/work/qt/Qt/6.5.2/macos'
             runner: macos-latest
-            cmake_args: '"-DCMAKE_OSX_ARCHITECTURES=arm64" -DCMAKE_SYSTEM_NAME=Darwin -DQT_FORCE_BUILD_TOOLS=on -DQT_HOST_PATH=/Users/runner/work/qt/Qt/6.5.2/macos'
+            cmake_args: '"-DCMAKE_OSX_ARCHITECTURES=arm64" "-DCMAKE_OSX_DEPLOYMENT_TARGET=11.0" -DCMAKE_SYSTEM_NAME=Darwin -DQT_FORCE_BUILD_TOOLS=on -DQT_HOST_PATH=/Users/runner/work/qt/Qt/6.5.2/macos'
             cmake_configs: 'Release'
             workdir: /Users/runner/workspace
             qtbase_config: '
