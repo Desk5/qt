@@ -41,6 +41,7 @@ jobs:
                 -DFEATURE_sql_odbc=off 
                 -DFEATURE_direct2d=off 
                 -DFEATURE_directwrite=off'
+
             qtdeclarative_config: '
                 -DFEATURE_quickcontrols2_fusion=OFF 
                 -DFEATURE_quickcontrols2_imagine=OFF 
@@ -49,11 +50,6 @@ jobs:
                 -DFEATURE_quickcontrols2_material=OFF 
                 -DFEATURE_quickcontrols2_universal=OFF 
                 -DFEATURE_quickcontrols2_windows=OFF'
-            qtimageformats_config: '
-                -DFEATURE_jasper=OFF
-                -DFEATURE_mng=OFF
-                -DFEATURE_tiff=OFF
-                -DFEATURE_webp=ON'
 
           - target: linux_x64
             runner: ubuntu-latest
@@ -95,11 +91,6 @@ jobs:
                 -DFEATURE_quickcontrols2_material=OFF 
                 -DFEATURE_quickcontrols2_universal=OFF 
                 -DFEATURE_quickcontrols2_windows=OFF'
-            qtimageformats_config: '
-                -DFEATURE_jasper=OFF
-                -DFEATURE_mng=OFF
-                -DFEATURE_tiff=OFF
-                -DFEATURE_webp=ON'
 
           - target: mac_x64
             runner: macos-latest
@@ -134,11 +125,6 @@ jobs:
                 -DFEATURE_quickcontrols2_material=OFF 
                 -DFEATURE_quickcontrols2_universal=OFF 
                 -DFEATURE_quickcontrols2_windows=OFF'
-            qtimageformats_config: '
-                -DFEATURE_jasper=OFF
-                -DFEATURE_mng=OFF
-                -DFEATURE_tiff=OFF
-                -DFEATURE_webp=ON'
 
           - target: mac_arm64
             # The runner is x64 and we are building for ARM
@@ -181,11 +167,6 @@ jobs:
                 -DFEATURE_quickcontrols2_material=OFF 
                 -DFEATURE_quickcontrols2_universal=OFF 
                 -DFEATURE_quickcontrols2_windows=OFF'
-            qtimageformats_config: '
-                -DFEATURE_jasper=OFF
-                -DFEATURE_mng=OFF
-                -DFEATURE_tiff=OFF
-                -DFEATURE_webp=ON'
 
       fail-fast: false
 
@@ -228,7 +209,7 @@ jobs:
         host: ${{matrix.cross_qt_host}}
         target: 'desktop'
         arch: ${{matrix.cross_qt_arch}}
-        archives: 'qtbase qtdeclarative qtimageformats'
+        archives: 'qtbase qtdeclarative'
         modules: 'qtshadertools'
         add-tools-to-path: false
         set-env: false
@@ -262,11 +243,11 @@ jobs:
     - name: Configure QtShaderTools
       shell: bash
       run: cmake -S qtshadertools -B "${BUILD_DIR_BASE}-qtshadertools" "-DCMAKE_INSTALL_PREFIX=${{env.Qt6_DIR}}" -G Ninja ${{matrix.cmake_args}} -DCMAKE_BUILD_TYPE=Release
-
+    
     - name: Build QtShaderTools
       shell: bash
       run: cmake --build "${BUILD_DIR_BASE}-qtshadertools" --parallel
-
+    
     - name: Install QtShaderTools
       shell: bash
       run: ninja -C "${BUILD_DIR_BASE}-qtshadertools" install
@@ -288,24 +269,6 @@ jobs:
     - name: Install QtDeclarative
       shell: bash
       run: ninja -C "${BUILD_DIR_BASE}-qtdeclarative" install
-
-    - name: Configure QtImageFormats
-      shell: bash
-      run: >
-          cmake -S qtimageformats -B "${BUILD_DIR_BASE}-qtimageformats"
-          "-DCMAKE_INSTALL_PREFIX=${{env.Qt6_DIR}}"
-          -G "Ninja Multi-Config"
-          "-DCMAKE_CONFIGURATION_TYPES=${{matrix}}"
-          ${{matrix.cmake_args}}
-          ${{matrix.qtimageformats_config}}
-
-    - name: Build QtImageFormats
-      shell: bash
-      run: cmake --build "${BUILD_DIR_BASE}-qtimageformats" --parallel
-
-    - name: Install QtImageFormats
-      shell: bash
-      run: ninja -C "${BUILD_DIR_BASE}-qtimageformats" install
 
     - name: Remove __qt_platform_requires_host_info_package flag from build
       if: matrix.cross_qt_host
