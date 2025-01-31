@@ -39,8 +39,9 @@ jobs:
                 -DFEATURE_opengl=off 
                 -DFEATURE_dynamicgl=off 
                 -DFEATURE_sql_odbc=off 
-                -DFEATURE_direct2d=off 
-                -DFEATURE_directwrite=off'
+                -DFEATURE_direct2d=on
+                -DFEATURE_directwrite=on'
+
 
             qtdeclarative_config: '
                 -DFEATURE_quickcontrols2_fusion=OFF 
