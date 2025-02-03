@@ -83,7 +83,8 @@ jobs:
                 -DFEATURE_sql_psql=off
                 -DFEATURE_vnc=off
                 -DFEATURE_linuxfb=off
-                -DFEATURE_eglfs=off'
+                -DFEATURE_eglfs=off
+                -DFEATURE_system_freetype=off'
             qtdeclarative_config: '
                 -DFEATURE_quickcontrols2_fusion=OFF 
                 -DFEATURE_quickcontrols2_imagine=OFF 
