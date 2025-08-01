@@ -35,7 +35,7 @@ jobs:
                 -DFEATURE_textmarkdownreader=on 
                 -DFEATURE_textmarkdownwriter=off 
                 -DFEATURE_textodfwriter=off 
-                -DFEATURE_cssparser=off 
+                -DFEATURE_cssparser=on
                 -DFEATURE_opengl=off 
                 -DFEATURE_dynamicgl=off 
                 -DFEATURE_sql_odbc=off 
