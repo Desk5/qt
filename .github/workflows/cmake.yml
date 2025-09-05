@@ -73,7 +73,7 @@ jobs:
                 -DFEATURE_textmarkdownreader=on 
                 -DFEATURE_textmarkdownwriter=off 
                 -DFEATURE_textodfwriter=off 
-                -DFEATURE_cssparser=off 
+                -DFEATURE_cssparser=on
                 -DFEATURE_gssapi=off
                 -DFEATURE_glib=off
                 -DFEATURE_dtls=off
@@ -117,7 +117,7 @@ jobs:
                 -DFEATURE_textmarkdownreader=on 
                 -DFEATURE_textmarkdownwriter=off 
                 -DFEATURE_textodfwriter=off 
-                -DFEATURE_cssparser=off 
+                -DFEATURE_cssparser=on
                 -DINPUT_opengl=no
                 -DFEATURE_sql_odbc=off
                 -DFEATURE_sql_mysql=off
@@ -151,7 +151,7 @@ jobs:
                 -DFEATURE_textmarkdownreader=on 
                 -DFEATURE_textmarkdownwriter=off 
                 -DFEATURE_textodfwriter=off 
-                -DFEATURE_cssparser=off 
+                -DFEATURE_cssparser=on
                 -DINPUT_opengl=no
                 -DFEATURE_sql_odbc=off
                 -DFEATURE_sql_mysql=off
