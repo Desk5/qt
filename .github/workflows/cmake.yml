@@ -238,6 +238,39 @@ jobs:
       shell: bash
       run: ninja -C "${BUILD_DIR_BASE}-qtbase" install
 
+    # The container's only libssl-dev is 1.1.1, which pins the in-tree TLS plugin to
+    # the OpenSSL 1.x code paths. Generate a set of OpenSSL 3.x headers so we can build
+    # a second copy of that plugin for modern systems.
+    - name: Generate OpenSSL 3.x headers
+      if: runner.os == 'Linux'
+      shell: bash
+      run: |
+        # The whole scheme assumes the in-tree plugin still gets 1.1 headers from the
+        # container's /usr/include. Catch a base image that moved to OpenSSL 3.
+        test ! -f /usr/include/openssl/configuration.h && tls-openssl3/generate-openssl3-headers.sh /opt/openssl3
+
+    - name: Configure OpenSSL 3.x TLS plugin
+      if: runner.os == 'Linux'
+      shell: bash
+      run: >
+          cmake -S tls-openssl3 -B "${BUILD_DIR_BASE}-tls-openssl3"
+          "-DCMAKE_INSTALL_PREFIX=${{env.Qt6_DIR}}"
+          "-DCMAKE_PREFIX_PATH=${{env.Qt6_DIR}}"
+          -G Ninja
+          -DCMAKE_BUILD_TYPE=Release
+          ${{matrix.cmake_args}}
+          -DQT_OPENSSL3_INCLUDE_DIR=/opt/openssl3/include
+
+    - name: Build OpenSSL 3.x TLS plugin
+      if: runner.os == 'Linux'
+      shell: bash
+      run: cmake --build "${BUILD_DIR_BASE}-tls-openssl3" --parallel
+
+    - name: Install OpenSSL 3.x TLS plugin
+      if: runner.os == 'Linux'
+      shell: bash
+      run: ninja -C "${BUILD_DIR_BASE}-tls-openssl3" install
+
     - name: Configure QtShaderTools
       shell: bash
       run: cmake -S qtshadertools -B "${BUILD_DIR_BASE}-qtshadertools" "-DCMAKE_INSTALL_PREFIX=${{env.Qt6_DIR}}" -G Ninja ${{matrix.cmake_args}} -DCMAKE_BUILD_TYPE=Release
